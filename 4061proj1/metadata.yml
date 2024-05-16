@@ -1,10 +1,8 @@
 ---
 :id: 202190634
 :submitters:
-- :name: Cole Schmidt
-  :email: schm5346@umn.edu
-- :name: Alexander Tatley
-  :email: tatle010@umn.edu
+- :name: Cole
+- :name: Alexander
 - :name: Samuel Capece
   :email: capec016@umn.edu
 :created_at: !ruby/object:ActiveSupport::TimeWithZone
