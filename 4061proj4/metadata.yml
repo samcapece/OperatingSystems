@@ -1,0 +1,16 @@
+---
+:id: 220626140
+:submitters:
+- :name: Cole Schmidt
+  :email: schm5346@umn.edu
+- :name: Alexander Tatley
+  :email: tatle010@umn.edu
+- :name: Samuel Capece
+  :email: capec016@umn.edu
+:created_at: !ruby/object:ActiveSupport::TimeWithZone
+  utc: 2023-12-15 21:05:24.387132000 Z
+  zone: !ruby/object:ActiveSupport::TimeZone
+    name: America/Los_Angeles
+  time: 2023-12-15 13:05:24.387132000 Z
+:status: processed
+:score: 90.0
