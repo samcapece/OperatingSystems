@@ -1,175 +1,75 @@
-# proj4
+# Project 4: Client-Server Image Processing
 
+### Project Overview
+Project 4 involves creating a client-server application for image processing using socket programming. The goal is to develop a server that handles multiple client connections concurrently, processes image rotation requests, and sends back the processed images. This project emphasizes understanding and implementing TCP sockets and client-server communication.
 
-We have written confirmation from the professor that we were allowed a 2-day extension
+### Objectives
+- Implement a multi-threaded server to handle image processing requests from multiple clients.
+- Develop a client program to send images to the server for processing.
+- Use socket programming to establish and manage TCP connections between clients and the server.
 
-- Project group number
-18
+### Components
+1. **Server Program**
+   - Initializes a TCP socket and listens for incoming connections on a specific port.
+   - Accepts client connections and creates a new thread for each client to handle requests.
 
-- Group member names and x500s
+2. **Client Handling Thread**
+   - Receives image rotation requests from the client.
+   - Processes the image (rotate 180 or 270 degrees) and sends the processed image back to the client.
+   - Closes the connection when the client terminates the session.
 
-Alexander Tatley, tatle010 
+3. **Client Program**
+   - Takes an input directory as a command-line argument.
+   - Connects to the server and sends image rotation requests.
+   - Receives and saves the processed images from the server.
 
-Cole Schmidt, schm5346 
+### Communication Protocol
+- **Packet Format:**
+  - `Operation (int)`
+  - `Flags (int)`
+  - `Image Size (int)`
+  - `Checksum (Char, 32 bytes, extra credit)`
+  - `Image Data`
 
-Samuel Capece, capec016
+- **Operations:**
+  - `IMG_OP_ACK (1)`: Acknowledgement.
+  - `IMG_OP_NAK (2)`: Negative acknowledgement.
+  - `IMG_OP_ROTATE (3)`: Request for image rotation.
+  - `IMG_OP_EXIT (4)`: Termination of connection.
 
-- The name of the CSELabs computer that you tested your code on
+- **Flags:**
+  - `IMG_FLAG_ROTATE_180 (1)`: 180-degree rotation.
+  - `IMG_FLAG_ROTATE_270 (2)`: 270-degree rotation.
+  - `IMG_FLAG_ENCRYPTED (3)`: Message is encrypted.
+  - `IMG_FLAG_CHECKSUM (4)`: Packet contains a checksum for the image.
 
-login01.cselabs.umn.edu
+### Directory Structure
+- `include/`: Header files (`utils.h`, `server.h`, `client.h`)
+- `lib/`: Library files (`utils.o`)
+- `src/`: Source files (`server.c`, `client.c`)
+- `img/`: Contains multiple directories with different images
+- `expected/`: Expected output
+- `Makefile`: Build instructions and testing commands
 
-- Any changes you made to the Makefile or existing files that would affect
-grading
+### Compilation Instructions
+To compile the server, client, or both:
+```sh
+# Compile the server
+make server
 
-none
+# Compile the client
+make client
 
-- Plan outlining individual contributions for each member of your group
-
-Alex - debugging
-
-Cole - image processing for client handler, send_file, I/O between server and client, and debugging
-
-Samuel - recieve file, bugfixed server and client code, rewrote server main and client_handler to process multiple images, and added functionality for switching clients using mutexes
-
-- Plan on how to construct the client handling thread and package sending
-
-
-ok, the clienthandler will have to discern within the packet of whatever it's IMG_OP_ACK (1), IMG_OP_NAK (2), IMG_OG_ROTATE (3), or IMG_OP_EXIT (4).
-
-It should do this using if statements and discerning the content of the packet it recieved from a specific client.
-
-If it's 4 for an operation, send a packet to the client and terminate the connection i.e. the socket. 4 should only be used from the clienthandler to send to a client in when it finished it's image processing.
-
-2 should be used when there's an error or incoherent contents in the packet that the client handler received from a client
-
-3 should only be used from client to server in send_file() in client.c.
-
-
-when the client is recieving any requests, it'll have to do so with a for loop like the used in file sending. Client should be in a loop like in server so that the file receiving doesn't get included with cleaning resources but a part of the  process
-
-The client handler should discern the degree of image rotation based on the packet.
-
-There'll be a packet sent to the client handler for the rotations, flags, and including a unique hash for a hypothetical image. There'll be another one for the images, ideally encypted using the SHA256 function and discernable using a hash value. 
-
-After the image has been processed by the client handler, it'll be sent back to the client using the SHA256 encryption and with it's own checksum.
-
-The checksum that'll be derived from mixing the hash value from the original image (left) and the processed image (right) as it's own unqiue hash that'll be sent back to the client. 
-
-Moreover, the next image will have to take the hash value from the preceding image for it's own unique hash value and use that to create a checksum for the nest processed image.
-
-
-
-It's only different in the case that we couldn't submit encryption and the checksum in time
-
-// partially lifted from file
-
-send_file(rotationAngle) {
-    packet.operation = IMG_OP_ROTATE
-
-    if (rotationAngle == 180) {
-        packet.flags = IMG_FLAG_ROTATE_180;
-    } else if (rotation_angle == 270) {
-        packet.flags = IMG_FLAG_ROTATE_180;
-    } else {
-        packet.flags = 0; // No rotation flag if angle is neither 180 nor 270
-    }
-
-    ...
-
-    // Serialize the packet
-    char *serializedData = serializePacket(&packet);
-
-    // Send message to server
-    int ret = send(socket, serializedData, PACKETSZ, 0); 
-    if (ret == -1) {
-        perror("send error");
-        free(serializedData);
-        close(file);
-        return -1;
-    }
-}
-
-recieve_file() {
-    char packet_buffer[PACKETSIZE];
-    memorySet(packet_buffer, NOVALUE, PACKETSIZE);
-
-    ssize_t packet_bytes_received = recieveMessage(socket, packet_buffer, PACKETSIZE, NOFLAG);
-    if (packet_bytes_received < 0) {
-        perror("Error receiving packet");
-        return -1;
-    } else if (packet_bytes_received == 0) {
-        printf("Connection closed by server\n");
-        return -1;
-    }
-    
-    packet_t packet;
-    memcpy(&packet, packet_buffer, sizeof(packet_t));
-
-    ... (allocate memory for image)
-
-    // Check for ACK flag
-    if (packet.operation != IMG_OP_ACK) {
-        fprintf(stderr, "Received NAK from server or invalid operation\n");
-        return -1;
-    }
-}
-
-clientHandler(socket) {
-    //Cast socket to int
-    int client_socket = *((int *)socket);
-    free(socket);
-    printf("Clienthandler socket created\n");
-    while(1) {
-            char packet_buffer[PACKETSZ];
-            memset(packet_buffer, 0, PACKETSZ);
-
-            
-
-            // Receive packets from the client
-            ssize_t packet_bytes_received = recv(client_socket, packet_buffer, PACKETSZ, 0);
-            if (packet_bytes_received < 0) {
-                perror("Error receiving packet");
-                // Handle error appropriately, possibly close the connection and return
-                break;
-            }
-            else if (packet_bytes_received == 0)
-            {
-                printf("Connection closed by client\n");
-                // Connection closed by client
-                break;
-            }
-
-
-            printf("packet recieved from client confirmation: %zd\n", packet_bytes_received);
-
-            // Deserialize recieved data
-            packet_t *packet = deserializeData(packet_buffer);
-            if (packet == NULL) {
-                break;
-            }
-
-            ... (recieving and processing image data)
-
-            printf("Packet operation: %d\n", packet->operation);
-            printf("Flags operation: %d\n", packet->flags);
-
-            // Process the packet based on its operation type
-            if (packet->operation == IMG_OP_ROTATE) {
-                printf("Rotate Image Operation Received\n");
-            } else if (packet->operation == IMG_OP_EXIT) {
-                printf("Terminate connection operation Received\n");
-                break;
-            }
-
-            packet_t ackpacket;
-            ackpacket.operation = IMG_OP_ACK; // Set to appropriate acknowledgment operation
-            ackpacket.size = output_size; // Use the same size as the received packet for the image data
-
-            // Send acknowledgment packet
-            int bytes_sent = send(client_socket, &ackpacket, sizeof(ackpacket), 0);    if (bytes_sent == -1) {
-                fprintf(stderr, "Error sending acknowledgment: %s\n", strerror(errno));
-            } else {
-                printf("Acknowledgment sent successfully\n");
-            }
-    }
-}
+# Compile both server and client
+make all
+```
+To run the server and client:
+```sh
+./server
+# In separate terminal
+./client <input_dir> <output_dir> <rotate_angle>
+```
+To clean out the compiled server, client, and reset input/output directory:
+```sh
+make clean
+```
