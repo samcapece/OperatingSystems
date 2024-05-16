@@ -24,15 +24,13 @@ This project focuses on implementing a data deduplication system using the conce
   ```bash
   make all
   ```
-
-  ## Usage
   To run the dedeuplication system:
   ```bash
   ./deduplication root_directory
   ```
   Where 'root_directory' is the path to the directory you want to deduplicate
 
-  ## Testing
+## Testing
   To run the provided tests:
   ```bash
   make test
