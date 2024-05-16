@@ -1,5 +1,4 @@
 # Operating Systems
-## Project Compilation
 
 This repository contains four distinct projects developed as part of the operating systems course. Each project focuses on different aspects of operating systems, from process management and inter-process communication to multithreading and socket programming.
 
